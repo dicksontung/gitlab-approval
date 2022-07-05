@@ -113,7 +113,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			return err
 		}
-		if errorIfNotApproved {
+		if errorIfNotApproved && !allApproved {
 			fmt.Fprintln(os.Stderr, "Error: not approved by all owners")
 			os.Exit(1)
 		}
@@ -125,7 +125,7 @@ func init() {
 	approvalsCmd.Flags().StringVarP(&config.GitlabURL, "server-url", "u", "", "gitlab_url default to "+defaultGitlabUrl)
 	approvalsCmd.Flags().IntVarP(&config.ProjectID, "project-id", "p", viper.GetInt("CI_PROJECT_ID"), "project id")
 	approvalsCmd.Flags().IntVarP(&config.MergeRequestID, "merge-request-iid", "m", viper.GetInt("CI_MERGE_REQUEST_IID"), "merge request id")
-	approvalsCmd.Flags().StringVarP(&config.Token, "job-token", "t", viper.GetString("CI_JOB_TOKEN"), "merge request id")
+	approvalsCmd.Flags().StringVarP(&config.Token, "job-token", "t", viper.GetString("CI_JOB_TOKEN"), "gitlab token")
 	approvalsCmd.Flags().StringVarP(&codeownersFile, "codeownersfile", "", "", "CODEOWNERS file path")
 	approvalsCmd.Flags().BoolVarP(&errorIfNotApproved, "error", "", false, "error on exit if not approved")
 	rootCmd.AddCommand(approvalsCmd)
