@@ -122,10 +122,10 @@ to quickly create a Cobra application.`,
 }
 
 func init() {
-	approvalsCmd.PersistentFlags().StringVarP(&config.GitlabURL, "gitlab_url", "u", viper.GetString("GITLAB_APPROVAL_URL"), "gitlab_url default to "+defaultGitlabUrl)
-	approvalsCmd.PersistentFlags().IntVarP(&config.ProjectID, "project_id", "p", viper.GetInt("GITLAB_APPROVAL_PROJECT_ID"), "project id")
-	approvalsCmd.PersistentFlags().IntVarP(&config.MergeRequestID, "merge_request_id", "m", viper.GetInt("GITLAB_APPROVAL_MERGE_REQUEST_ID"), "merge request id")
-	approvalsCmd.PersistentFlags().StringVarP(&config.Token, "token", "t", viper.GetString("GITLAB_APPROVAL_TOKEN"), "merge request id")
+	approvalsCmd.PersistentFlags().StringVarP(&config.GitlabURL, "gitlab_url", "u", viper.GetString("CI_SERVER_URL"), "gitlab_url default to "+defaultGitlabUrl)
+	approvalsCmd.PersistentFlags().IntVarP(&config.ProjectID, "project_id", "p", viper.GetInt("CI_PROJECT_ID"), "project id")
+	approvalsCmd.PersistentFlags().IntVarP(&config.MergeRequestID, "merge_request_id", "m", viper.GetInt("CI_MERGE_REQUEST_IID"), "merge request id")
+	approvalsCmd.PersistentFlags().StringVarP(&config.Token, "token", "t", viper.GetString("CI_JOB_TOKEN"), "merge request id")
 	approvalsCmd.PersistentFlags().StringVarP(&codeownersFile, "codeownersfile", "", "", "CODEOWNERS file path")
 	approvalsCmd.PersistentFlags().BoolVarP(&errorIfNotApproved, "error", "", false, "error on exit if not approved")
 	rootCmd.AddCommand(approvalsCmd)
