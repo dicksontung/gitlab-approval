@@ -33,7 +33,7 @@ to quickly create a Cobra application.`,
 type Config struct {
 	GitlabURL      string `yaml:"gitlab_url"`
 	Token          string `yaml:"token"`
-	ProjectID      int    `yaml:"project_id"`
+	ProjectID      string `yaml:"project_id"`
 	MergeRequestID int    `yaml:"merge_request_id"`
 }
 
@@ -47,7 +47,7 @@ var (
 
 func init() {
 	configCmd.PersistentFlags().StringVarP(&config.GitlabURL, "gitlab_url", "u", defaultGitlabUrl, "gitlab_url default to "+defaultGitlabUrl)
-	configCmd.PersistentFlags().IntVarP(&config.ProjectID, "project_id", "p", 0, "project id")
+	configCmd.PersistentFlags().StringVarP(&config.ProjectID, "project_id", "p", "", "project id")
 	configCmd.PersistentFlags().IntVarP(&config.MergeRequestID, "merge_request_id", "m", 0, "merge request id")
 	configCmd.PersistentFlags().StringVarP(&config.Token, "token", "t", "", "gitlab access token")
 
