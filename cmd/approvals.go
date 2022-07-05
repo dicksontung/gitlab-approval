@@ -7,6 +7,8 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -14,12 +16,18 @@ import (
 )
 
 var (
-	changedFiles      []string
-	fileOwners        = map[string]map[string]bool{} //map[file]map[owner]bool
-	filesApproved     = map[string]bool{}
-	approversApproved = map[string]bool{}
-	approversPending  = map[string]bool{}
+	changedFiles       []string
+	fileOwners         = map[string]map[string]bool{} //map[file]map[owner]bool
+	filesApproved      = map[string]bool{}
+	approversApproved  = map[string]bool{}
+	comment            = Comment{}
+	errorIfNotApproved = false
 )
+
+type Comment struct {
+	AllApproved   bool            `yaml:"allApproved"`
+	FilesApproved map[string]bool `yaml:"filesApproved"`
+}
 
 // approvalsCmd represents the approvals command
 var approvalsCmd = &cobra.Command{
@@ -91,7 +99,24 @@ to quickly create a Cobra application.`,
 		if allApproved {
 			fmt.Println("All approval done")
 		}
-
+		comment.FilesApproved = filesApproved
+		comment.AllApproved = allApproved
+		yamlData, err := yaml.Marshal(comment)
+		if err != nil {
+			return err
+		}
+		noteBody := "Approval status: \n```\n" + string(yamlData) + "\n```"
+		noteOpt := gitlab.CreateMergeRequestNoteOptions{
+			Body: &noteBody,
+		}
+		_, _, err = gitCli.Notes.CreateMergeRequestNote(config.ProjectID, config.MergeRequestID, &noteOpt)
+		if err != nil {
+			return err
+		}
+		if errorIfNotApproved {
+			fmt.Fprintln(os.Stderr, "Error: not approved by all owners")
+			os.Exit(1)
+		}
 		return nil
 	},
 }
@@ -102,6 +127,7 @@ func init() {
 	approvalsCmd.PersistentFlags().IntVarP(&config.MergeRequestID, "merge_request_id", "m", viper.GetInt("GITLAB_APPROVAL_MERGE_REQUEST_ID"), "merge request id")
 	approvalsCmd.PersistentFlags().StringVarP(&config.Token, "token", "t", viper.GetString("GITLAB_APPROVAL_TOKEN"), "merge request id")
 	approvalsCmd.PersistentFlags().StringVarP(&codeownersFile, "codeownersfile", "", "", "CODEOWNERS file path")
+	approvalsCmd.PersistentFlags().BoolVarP(&errorIfNotApproved, "error", "", false, "error on exit if not approved")
 	rootCmd.AddCommand(approvalsCmd)
 
 	// Here you will define your flags and configuration settings.
