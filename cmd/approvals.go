@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	changedFiles       []string
-	fileOwners         = map[string]map[string]bool{} //map[file]map[owner]bool
+	fileOwners         = map[string]map[string]struct{}{} //map[file]map[owner]bool
 	filesApproved      = map[string]bool{}
 	approversApproved  = map[string]bool{}
 	comment            = Comment{}
@@ -49,26 +48,24 @@ to quickly create a Cobra application.`,
 			return err
 		}
 		for _, change := range changes.Changes {
-			changedFiles = append(changedFiles, change.NewPath, change.OldPath)
-		}
-		if len(changedFiles) == 0 {
-			changedFiles = append(changedFiles, ".")
+			fileChanges[change.OldPath] = struct{}{}
+			fileChanges[change.NewPath] = struct{}{}
 		}
 		ruleset, err := loadCodeowners(codeownersFile)
 		if err != nil {
 			return err
 		}
-		for _, file := range changedFiles {
+		for file, _ := range fileChanges {
 			rule, err := ruleset.Match(file)
 			if err != nil {
 				return err
 			}
 			if rule != nil {
 				if fileOwners[file] == nil {
-					fileOwners[file] = map[string]bool{}
+					fileOwners[file] = map[string]struct{}{}
 				}
 				for _, o := range rule.Owners {
-					fileOwners[file][o.Value] = true
+					fileOwners[file][o.Value] = struct{}{}
 				}
 			}
 			filesApproved[file] = false
@@ -81,7 +78,7 @@ to quickly create a Cobra application.`,
 		for _, a := range app.ApprovedBy {
 			approversApproved[a.User.Username] = true
 		}
-		fmt.Printf("approval done: %v \n", approversApproved)
+		fmt.Printf("Approval done: %v \n", approversApproved)
 		for file, owners := range fileOwners {
 			for o, _ := range owners {
 				if approversApproved[o] {
