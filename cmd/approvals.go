@@ -16,16 +16,17 @@ import (
 )
 
 var (
-	fileOwners         = map[string]map[string]struct{}{} //map[file]map[owner]bool
-	filesApproved      = map[string]bool{}
-	approversApproved  = map[string]bool{}
-	comment            = Comment{}
-	errorIfNotApproved = false
+	fileOwners             = map[string]map[string]struct{}{} //map[file]map[owner]bool
+	filesApproved          = map[string]bool{}
+	approversApproved      = map[string]bool{}
+	comment                = Comment{}
+	errorIfNotApproved     = false
+	disableCodeOwnersCheck = false
 )
 
 type Comment struct {
-	AllApproved   bool            `yaml:"allApproved"`
-	FilesApproved map[string]bool `yaml:"filesApproved"`
+	AllApproved   bool            `yaml:"all_approved"`
+	FilesApproved map[string]bool `yaml:"files_approved"`
 }
 
 // approvalsCmd represents the approvals command
@@ -48,6 +49,8 @@ to quickly create a Cobra application.`,
 			return err
 		}
 		for _, change := range changes.Changes {
+			checkCodeOwner(change.OldPath)
+			checkCodeOwner(change.NewPath)
 			fileChanges[change.OldPath] = struct{}{}
 			fileChanges[change.NewPath] = struct{}{}
 		}
@@ -118,6 +121,13 @@ to quickly create a Cobra application.`,
 	},
 }
 
+func checkCodeOwner(path string) {
+	if !disableCodeOwnersCheck && contains(CodeOwnersLocations, path) {
+		fmt.Fprintf(os.Stderr, "Error: %v changed \n", path)
+		os.Exit(1)
+	}
+}
+
 func init() {
 	approvalsCmd.Flags().StringVarP(&config.GitlabURL, "server-url", "u", "", "gitlab_url default to "+defaultGitlabUrl)
 	approvalsCmd.Flags().StringVarP(&config.ProjectID, "project-id", "p", viper.GetString("CI_PROJECT_ID"), "project id")
@@ -125,6 +135,7 @@ func init() {
 	approvalsCmd.Flags().StringVarP(&config.Token, "job-token", "t", viper.GetString("CI_JOB_TOKEN"), "gitlab token")
 	approvalsCmd.Flags().StringVarP(&codeownersFile, "codeownersfile", "", "", "CODEOWNERS file path")
 	approvalsCmd.Flags().BoolVarP(&errorIfNotApproved, "error", "", false, "error on exit if not approved")
+	approvalsCmd.Flags().BoolVarP(&disableCodeOwnersCheck, "disable-codeowners-check", "", false, "disable CODEOWNERS file check")
 	rootCmd.AddCommand(approvalsCmd)
 
 	// Here you will define your flags and configuration settings.

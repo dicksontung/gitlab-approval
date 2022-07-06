@@ -6,11 +6,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xanzy/go-gitlab"
-	"os"
-
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -46,14 +44,8 @@ var verifyCmd = &cobra.Command{
 			return err
 		}
 		for _, change := range changes.Changes {
-			if contains(CodeOwnersLocations, change.OldPath) {
-				fmt.Fprintf(os.Stderr, "Error: %v changed \n", change.OldPath)
-				os.Exit(1)
-			}
-			if contains(CodeOwnersLocations, change.NewPath) {
-				fmt.Fprintf(os.Stderr, "Error: %v changed \n", change.NewPath)
-				os.Exit(1)
-			}
+			checkCodeOwner(change.OldPath)
+			checkCodeOwner(change.NewPath)
 		}
 		fmt.Println("OK")
 		return nil
