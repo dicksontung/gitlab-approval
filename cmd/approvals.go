@@ -22,6 +22,7 @@ var (
 	comment                = Comment{}
 	errorIfNotApproved     = false
 	disableCodeOwnersCheck = false
+	gitCli                 *gitlab.Client
 )
 
 type Comment struct {
@@ -40,10 +41,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		gitCli, err := gitlab.NewClient(config.Token, gitlab.WithBaseURL(config.GitlabURL+"/api/v4"))
-		if err != nil {
-			return err
-		}
+		gitCli, _ = gitlab.NewClient(config.Token, gitlab.WithBaseURL(config.GitlabURL+"/api/v4"))
 		changes, _, err := gitCli.MergeRequests.GetMergeRequestChanges(config.ProjectID, config.MergeRequestID, nil)
 		if err != nil {
 			return err
@@ -137,7 +135,6 @@ func init() {
 	approvalsCmd.Flags().BoolVarP(&errorIfNotApproved, "error", "", false, "error on exit if not approved")
 	approvalsCmd.Flags().BoolVarP(&disableCodeOwnersCheck, "disable-codeowners-check", "", false, "disable CODEOWNERS file check")
 	rootCmd.AddCommand(approvalsCmd)
-
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
