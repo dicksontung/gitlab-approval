@@ -69,9 +69,11 @@ to quickly create a Cobra application.`,
 					fileOwners[file][o.Value] = struct{}{}
 				}
 			}
-			filesApproved[file] = false
 		}
 		fmt.Printf("Approval needed: %v \n", fileOwners)
+		for key := range fileOwners {
+			filesApproved[key] = false
+		}
 		app, _, err := gitCli.MergeRequestApprovals.GetConfiguration(config.ProjectID, config.MergeRequestID)
 		if err != nil {
 			return err
