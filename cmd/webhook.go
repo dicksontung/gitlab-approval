@@ -161,7 +161,7 @@ func init() {
 	webhookCmd.Flags().StringVarP(&config.Token, "job-token", "t", viper.GetString("CI_JOB_TOKEN"), "gitlab token")
 	webhookCmd.Flags().StringSliceVarP(&jobsToRetry, "jobs", "", viper.GetStringSlice("CI_JOBS"), "jobs to retry, defaults to 'approval'")
 	webhookCmd.Flags().IntVarP(&port, "port", "", viper.GetInt("CI_PORT"), "port number to listen on defaults to 80")
-	webhookCmd.Flags().StringVarP(&webhookToken, "webhook-token", "", viper.GetString("CI_WEBHOOK_TOKEN"), "webhook token used to validate payhook")
+	webhookCmd.Flags().StringVarP(&webhookToken, "webhook-token", "", viper.GetString("CI_WEBHOOK_TOKEN"), "webhook token used to validate webhook")
 	rootCmd.AddCommand(webhookCmd)
 
 	// Here you will define your flags and configuration settings.

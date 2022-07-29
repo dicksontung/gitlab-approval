@@ -22,8 +22,27 @@ var (
 	comment                = Comment{}
 	errorIfNotApproved     = false
 	disableCodeOwnersCheck = false
+	enableWebhook          = false
+	webhookSecret          = ""
+	webhookUrl             = ""
 	gitCli                 *gitlab.Client
 )
+
+type AddWebhookOptions struct {
+	URL                      string
+	ConfidentialNoteEvents   bool
+	PushEvents               bool
+	IssuesEvents             bool
+	ConfidentialIssuesEvents bool
+	MergeRequestsEvents      bool
+	TagPushEvents            bool
+	NoteEvents               bool
+	JobEvents                bool
+	PipelineEvents           bool
+	WikiPageEvents           bool
+	EnableSSLVerification    bool
+	Token                    string
+}
 
 type Comment struct {
 	AllApproved   bool            `yaml:"all_approved"`
@@ -42,6 +61,9 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		gitCli, _ = gitlab.NewClient(config.Token, gitlab.WithBaseURL(config.GitlabURL+"/api/v4"))
+		if enableWebhook {
+			addWebhook()
+		}
 		changes, _, err := gitCli.MergeRequests.GetMergeRequestChanges(config.ProjectID, config.MergeRequestID, nil)
 		if err != nil {
 			return err
@@ -128,6 +150,50 @@ func checkCodeOwner(path string) {
 	}
 }
 
+func addWebhook() {
+	if webhookExist() {
+		return
+	}
+	addWebhookOptions := AddWebhookOptions{
+		URL:                      webhookUrl,
+		ConfidentialNoteEvents:   false,
+		PushEvents:               false,
+		IssuesEvents:             false,
+		ConfidentialIssuesEvents: false,
+		MergeRequestsEvents:      true,
+		TagPushEvents:            false,
+		NoteEvents:               false,
+		JobEvents:                false,
+		PipelineEvents:           false,
+		WikiPageEvents:           false,
+		EnableSSLVerification:    false,
+		Token:                    webhookSecret,
+	}
+	_, _, err := gitCli.Projects.AddProjectHook(config.ProjectID, &gitlab.AddProjectHookOptions{
+		EnableSSLVerification: &addWebhookOptions.EnableSSLVerification,
+		PushEvents:            &addWebhookOptions.PushEvents,
+		MergeRequestsEvents:   &addWebhookOptions.MergeRequestsEvents,
+		Token:                 &addWebhookOptions.Token,
+		URL:                   &addWebhookOptions.URL,
+	})
+	if err != nil {
+		fmt.Printf("unable to add webhook: %v \n", err)
+	}
+}
+
+func webhookExist() bool {
+	hooks, _, err := gitCli.Projects.ListProjectHooks(config.ProjectID, nil, nil)
+	if err != nil {
+		fmt.Printf("unable to get webhooks: %v \n", err)
+	}
+	for _, hook := range hooks {
+		if hook.URL == webhookUrl {
+			return true
+		}
+	}
+	return false
+}
+
 func init() {
 	approvalsCmd.Flags().StringVarP(&config.GitlabURL, "server-url", "u", "", "gitlab_url default to "+defaultGitlabUrl)
 	approvalsCmd.Flags().StringVarP(&config.ProjectID, "project-id", "p", viper.GetString("CI_PROJECT_ID"), "project id")
@@ -136,6 +202,9 @@ func init() {
 	approvalsCmd.Flags().StringVarP(&codeownersFile, "codeownersfile", "", "", "CODEOWNERS file path")
 	approvalsCmd.Flags().BoolVarP(&errorIfNotApproved, "error", "", false, "error on exit if not approved")
 	approvalsCmd.Flags().BoolVarP(&disableCodeOwnersCheck, "disable-codeowners-check", "", false, "disable CODEOWNERS file check")
+	approvalsCmd.Flags().BoolVarP(&enableWebhook, "enable-webhook", "", false, "Automatically add webhook if it does not exist")
+	approvalsCmd.Flags().StringVarP(&webhookUrl, "webhook-url", "", "", "webhook url to add")
+	approvalsCmd.Flags().StringVarP(&webhookSecret, "webhook-token", "", viper.GetString("CI_WEBHOOK_TOKEN"), "webhook token used to validate webhook")
 	rootCmd.AddCommand(approvalsCmd)
 	// Here you will define your flags and configuration settings.
 
