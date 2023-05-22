@@ -1,4 +1,4 @@
-all: build build-linux
+all: build build-linux compress
 
 .PHONY: build
 build:
@@ -11,3 +11,6 @@ build-linux:
 .PHONY: build-docker
 build-docker:
 	docker build -t dixont/gitlab-approval
+
+compress:
+	tar -czvf out/gitlab-approval-linux-amd64.tar.gz --directory=out/ gitlab-approval-linux-amd64
